@@ -91,10 +91,17 @@ RAG does not always need to be used. Efficiency improves when the system first c
 
 Examples:
 
-- Translation: RAG not required
-- Summarization: RAG not required
-- Search: RAG required
-- Suggestion: RAG required
+- Translation: RAG not required, classified as 'Sufficient'
+- Summarization: RAG not required, classified as 'Sufficient'
+- Search: RAG required, classified as 'Insufficient'
+- Suggestion: RAG required, classified as 'Insufficient'
+
+Classifier finetuning:
+
+- Model: BERT-base-multilingual-cased
+- Batch Size: 16
+- Learning Rate: 1e-5
+- Dataset: Generated based on subset of the Databricks-Dolly-15K
 
 ---
 
@@ -108,7 +115,7 @@ Possible approaches include the following.
   - Simple, but it may damage sentence-level meaning.
 - **Semantic-level**
   - Can split text by semantic units, but the cost is high.
-- **Sentence-level**
+- **Sentence-level**: Our choice
   - Splits text by sentence and balances meaning preservation with efficiency.
 
 ### 3.2.1 Chunk Size
@@ -124,12 +131,12 @@ There is a trade-off in chunk size.
   - May be efficient for retrieval.
   - May lack sufficient context.
 
-Example evaluation metrics:
+Evaluation metrics:
 
-- Faithfulness
-- Relevancy
+- Faithfulness: measures whether the response is hallucinated or grounded in the retrieved content.
+- Relevancy: measures how well the retrieved content and the response align with the query.
 
-Experimental setup summary:
+Experimental setup:
 
 - Framework: LlamaIndex
 - Embedding model: text-embedding-ada-002
@@ -138,7 +145,9 @@ Experimental setup summary:
 - Chunk overlap: 20 tokens
 - Dataset: Lyft 2021
 
-### 3.2.2–3 Chunking Techniques & Embedding Model Selection
+Optimal Chunk Size: 256 
+
+### 3.2.2 Chunking Techniques
 
 ![alt text](image-2.png)
 
@@ -149,7 +158,7 @@ Representative chunking techniques:
 - **Sliding window**
   - Maintains contextual continuity between adjacent chunks.
 
-Experimental setup summary:
+Experimental setup:
 
 - Embedding model: LLM-Embedder
 - Small chunk: 175 tokens
@@ -157,9 +166,18 @@ Experimental setup summary:
 - Chunk overlap: 20 tokens
 - Dataset: Lyft 2021
 
+
+### 3.2.3 Embedding Model Selection
+
 ![alt text](image-3.png)
 
 The embedding model is a key component that calculates semantic relevance between the query and chunks. In the paper, LLM-Embedder and text-embedding-ada-002 show similar performance, but LLM-Embedder is selected because it is lighter.
+
+Experimental setup:
+
+- Evaluation framework: FlagEmbedding evaluation module
+- Query dataset: namespace-Pt/msmarco
+- Corpus dataset: namespace-Pt/msmarco-corpus
 
 ### 3.2.4 Metadata Addition
 

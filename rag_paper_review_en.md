@@ -191,7 +191,7 @@ Adding metadata such as title, keywords, or pseudo-queries to chunks can improve
 
 A vector database is a database for efficiently storing and retrieving embedding vectors.
 
-Main types or characteristics:
+Main characteristics to consider to find the optimal vector database:
 
 - Multiple index types
 - Billion-scale vector support
@@ -215,16 +215,38 @@ Representative methods:
 - **Pseudo-document Generation**
   - Generates a hypothetical document from the query, as in HyDE, and uses it for retrieval.
 
+
 Baseline:
 
 - Sparse retrieval: BM25
 - Dense retrieval: Contriever
 
-### 3.4.2 HyDE
+### 3.4.1 HyDE
+
+- Supervised methods significantly outperform unsupervised methods
+
+- The highest performance is achieved when combining:
+  - LLM-Embedder
+  - HyDE
+  - Hybrid Search
+
+Recommended retrieval strategies:
+
+- Hybrid Search with HyDE is recommended as the default method for best performance
+
+- For efficiency-focused scenarios:
+  - Hybrid Search (combining sparse retrieval such as BM25 and dense retrieval using original embeddings)
+  - provides strong performance with relatively low latency
+  
+### 3.4.2 HyDEwith Different Concatenation of Documents and Query
 
 ![alt text](image-6.png)
 
-In HyDE, increasing the number of pseudo-documents may improve performance, but it also increases latency. The paper considers one pseudo-document sufficient when efficiency is taken into account.
+- The paper evaluates different strategies for combining pseudo-documents and the original query when using HyDE.
+
+- Increasing the number of pseudo-documents introduces a trade-off between retrieval performance and latency.
+
+- Using a single pseudo-document is sufficient to achieve strong performance while keeping latency manageable.
 
 ### 3.4.3 Hybrid Search
 
@@ -237,6 +259,15 @@ S_h = α · S_s + S_d
 The paper compares performance changes by adjusting the α value and selects α = 0.3.
 
 ---
+- **Alpha (α):** Controls the weighting between **sparse retrieval** and **dense retrieval** components in hybrid search.
+
+- \( S_s \) and \( S_d \) denote the **normalized relevance scores** from sparse and dense retrieval, respectively, while \( S_h \) represents the **final hybrid score**.
+
+- The hybrid score is computed as:
+  
+  \( S_h = \alpha \cdot S_s + S_d \)
+
+- **Best performance is achieved when \( \alpha = 0.3 \)**.
 
 ## 3.5 Reranking Methods
 

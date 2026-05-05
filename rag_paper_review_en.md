@@ -252,35 +252,35 @@ Recommended retrieval strategies:
 
 This method combines sparse retrieval and dense retrieval.
 
+- **Alpha (α):** Controls the weighting between **sparse retrieval** and **dense retrieval** components in hybrid search.
+
+- S_s and S_d denote the **normalized relevance scores** from sparse and dense retrieval, respectively, while S_h represents the **final hybrid score**.
+
+- The hybrid score is computed as:
+  
 ```text
 S_h = α · S_s + S_d
 ```
 
-The paper compares performance changes by adjusting the α value and selects α = 0.3.
-
----
-- **Alpha (α):** Controls the weighting between **sparse retrieval** and **dense retrieval** components in hybrid search.
-
-- \( S_s \) and \( S_d \) denote the **normalized relevance scores** from sparse and dense retrieval, respectively, while \( S_h \) represents the **final hybrid score**.
-
-- The hybrid score is computed as:
-  
-  \( S_h = \alpha \cdot S_s + S_d \)
-
-- **Best performance is achieved when \( \alpha = 0.3 \)**.
+- Best performance is achieved when \( \alpha = 0.3 \).
 
 ## 3.5 Reranking Methods
 
-Reranking is the stage that reorders retrieval results and provides more relevant documents to the LLM.
+Improves the relevance of retrieved documents by ensuring that the most pertinent information appears at the top of the list.
 
-Representative methods:
+Applies more precise but computationally expensive methods to increase similarity between the query and top-ranked documents.
+
+**Approaches considered:**
 
 - **DLM Reranking**
   - Judges query-document relevance as a classification task.
   - Adjusts rankings based on the true probability.
+  - Uses classification-based models (e.g., monoT5, monoBERT)
+  - Prioritizes **performance**
+
 - **TILDE Reranking**
   - A query-likelihood-based method.
-  - Has advantages in terms of efficiency.
+  - Prioritizes **efficiency**
 
 Experimental models:
 
@@ -304,8 +304,9 @@ This stage determines the order in which retrieved documents are placed into the
 - **Sides**
   - Places important documents at the beginning and end of the context.
 
-This is related to the observation that models can use information better when important information appears at the beginning or end of the context.
+**Default choice:**
 
+- The **Sides** strategy is selected as the default repacking method.
 ---
 
 ## 3.7 Summarization
@@ -322,17 +323,27 @@ Methods:
 Representative methods:
 
 - Recomp
+  - Supports both extractive and abstractive compression
+  - Extractive: selects useful sentences
+  - Abstractive: integrates information across documents
 - LongLLMLingua
+  - Focuses on key information relevant to the query
+  - Improves efficiency for long-context scenarios
 - SelectiveContext
+  - Removes redundant information from input context
+  - Improves LLM efficiency by filtering low-information content
 
 Experimental datasets:
 
-- NQ
-- TriviaQA
-- HotpotQA
+- NQ, TriviaQA, HotpotQA
 
-As a result, Recomp’s abstractive method showed strong performance, and LongLLMLingua is notable for showing reasonably good performance even on unseen data.
+Key findings:
 
+- **Recomp** demonstrates the best overall performance
+
+- **LongLLMLingua** is a viable alternative:
+  - Shows relatively weaker performance
+  - But exhibits **better generalization**, despite not being trained on the evaluation datasets
 ---
 
 ## 3.8 Generator Fine-tuning
@@ -341,7 +352,49 @@ As a result, Recomp’s abstractive method showed strong performance, and LongLL
 
 ![alt text](image-8.png)
 
-The paper fine-tunes Llama-2 7B-based models on several datasets and compares performance across validation sets. A model trained on mixed data tends to work robustly across diverse datasets and effectively use relevant documents.
+
+Objective:
+
+- Investigate how fine-tuning affects the generator,  
+  particularly the impact of **relevant vs. irrelevant context**.
+
+Formulation:
+
+- Let x be the input query and \( \mathcal{D} \) the retrieved context.
+- The training objective is to minimize the **negative log-likelihood (NLL)** of the ground-truth answer \( y \).
+
+Context settings:
+
+- D_g : only relevant documents → \{d_{gold}\}
+- D_r : only random documents → \{d_{random}\}
+- D_{gr} : relevant + random documents → \{d_{gold}, d_{random}\}
+- D_{gg} : duplicated relevant documents → \{d_{gold}, d_{gold}\}
+
+Models:
+
+- M_b : base (no fine-tuning)  
+- M_g, M_r, M_{gr}, M_{gg} : models fine-tuned under each context setting  
+
+Experimental setup:
+
+- Datasets: multiple QA and reading comprehension datasets  
+- Base model: **Llama-2-7B**  
+- Metric: **Ground-truth coverage** (suitable for short QA answers)  
+- Evaluation under:
+  - D_g, D_r, D_{gr} , and  
+  - D_{\emptyset}  (no retrieval at inference)
+
+Key findings:
+
+- The **mixed-context model M_{gr} (relevant + random) performs best across all settings  
+- Training with mixed contexts improves the generator’s ability to:
+  - utilize useful information
+  - ignore irrelevant noise  
+
+Conclusion:
+
+- The most effective strategy is to **augment training with both relevant and randomly selected documents**,  
+  which enhances robustness to noisy or imperfect retrieval.
 
 ---
 
